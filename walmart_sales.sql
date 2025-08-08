@@ -66,23 +66,31 @@ ORDER BY total_profit DESC;
 
 -- 7. Determine the most common payment method for each Branch, Display Branch and the preferred payment method.
 
-SELECT Branch, payment_method, COUNT(payment_method) as total_transactions -- , RANK() OVER(PARTITION BY Branch ORDER BY COUNT(payment_method) DESC) as ranks
-FROM walmart
-GROUP BY Branch
-ORDER BY Branch, total_transactions;
+WITH cte AS (
+    SELECT 
+        Branch,
+        payment_method,
+        COUNT(*) AS total_transactions,
+        RANK() OVER(PARTITION BY Branch ORDER BY COUNT(*) DESC) AS ranks
+    FROM walmart
+    GROUP BY Branch, payment_method
+)
+SELECT Branch, payment_method AS preferred_payment_method
+FROM cte
+WHERE ranks = 1;
 
 -- 8. Categorize sales into 3 groups MORNING, AFTERNOON, EVENING. Find out each of the shift and number of invoices
 
-SELECT branch,time,
+SELECT Branch, time ,
 	CASE 
-		WHEN (HOUR(time) ) < 12 THEN 'Morning'
-        WHEN (HOUR(time) ) BETWEEN 12 AND 17 THEN 'Afternoon'
+		WHEN (HOUR((time)) ) < 12 THEN 'Morning'
+        WHEN (HOUR((time)) ) BETWEEN 12 AND 17 THEN 'Afternoon'
         ELSE 'Evening'
-	END daytime,
-    COUNT(*)
+	END AS daytime,
+    COUNT(*) AS num_invoices
 FROM walmart
-GROUP BY Branch,daytime
-ORDER BY Branch,COUNT(*) DESC;
+GROUP BY Branch, time
+ORDER BY Branch, num_invoices DESC;
 
 -- 9. Identify 5 branch with the highest decrease ratio in revenue compared to last year (current year 2023)
 
